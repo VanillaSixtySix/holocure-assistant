@@ -13,13 +13,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install and Build
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Clean install dependencies
         run: |
+          rm -rf node_modules package-lock.json
           npm install
-          npm run build
+
+      - name: Build
+        run: npm run build
           
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
-          folder: public
+          folder: build
