@@ -2,6 +2,9 @@
 
 name: Deploy to GitHub Pages
 
+permissions:
+  contents: write
+
 on:
   push:
     branches: [ main ]
@@ -32,3 +35,4 @@ jobs:
         with:
           branch: gh-pages
           folder: build
+
