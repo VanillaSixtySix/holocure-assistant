@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { base } from '$app/paths';
     import WeaponButton from '$lib/components/weapon-button.svelte';
     import IconText from '$lib/components/icon-text.svelte';
 
@@ -366,14 +367,14 @@
         <div class="flex flex-wrap gap-4">
             {#each availableCollabs as availableCollab}
                 <div class="flex flex-col gap-2 bg-green-800 p-3 rounded-md w-fit" class:darkened={!isCollabAchievable(availableCollab)}>
-                    <IconText icon={"sprites/" + availableCollab.icon} text={availableCollab.name} />
+                    <IconText icon={`${base}/sprites/${availableCollab.icon}`} text={availableCollab.name} />
                     <div class="text-sm">
                         <p><strong>Attack Type:</strong> {availableCollab.attackType}</p>
                         <p><strong>Required Weapons:</strong></p>
                         <div class="flex gap-2 mt-1">
                             {#each availableCollab.weapons as weapon}
                                 <div class="flex items-center gap-1 text-xs bg-green-700 px-2 py-1 rounded">
-                                    <img src="sprites/{weapon.icon}" alt={weapon.name} class="w-4 h-4" />
+                                    <img src="{base}/sprites/{weapon.icon}" alt={weapon.name} class="w-4 h-4" />
                                     <span>{weapon.name}</span>
                                 </div>
                             {/each}

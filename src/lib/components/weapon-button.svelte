@@ -1,11 +1,12 @@
 <script lang="ts">
+    import { base } from '$app/paths';
     import IconText from './icon-text.svelte';
 
     const { weapon, onWeaponSelect, selected, compatible = true } = $props();
 </script>
 
 <button class="cursor-pointer rounded-md" class:selected class:incompatible={!compatible} onclick={() => onWeaponSelect(weapon)}>
-    <IconText icon={"/sprites/" + weapon.icon} text={weapon.name} />
+    <IconText icon={`${base}/sprites/${weapon.icon}`} text={weapon.name} />
 </button>
 
 <style>
