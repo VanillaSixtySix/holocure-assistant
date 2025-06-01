@@ -1,1 +1,9 @@
-// place files you want to import through the `$lib` alias in this folder.
+export interface Weapon {
+    icon: string;
+    name: string;
+}
+
+export interface Collab extends Weapon {
+    weapons: Weapon[];
+    attackType: string;
+}
