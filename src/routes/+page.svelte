@@ -3,7 +3,7 @@
     import WeaponButton from '$lib/components/weapon-button.svelte';
     import IconText from '$lib/components/icon-text.svelte';
 
-    import type { Weapon, Collab } from '$lib';
+    import type { Weapon, Collab, Item, SuperCollab } from '$lib';
 
     const weapons = {
         blBook: {
@@ -73,6 +73,29 @@
         xPotato: {
             icon: 'spr_XPotatoIcon_0.png',
             name: 'X-Potato',
+        }
+    };
+
+    const items = {
+        gorillasPaw: {
+            icon: 'spr_GorillasPawIcon_0.png', // placeholder icon
+            name: 'Gorilla\'s Paw',
+        },
+        idolCostume: {
+            icon: 'spr_IdolCostumeIcon_0.png', // placeholder icon
+            name: 'Idol Costume',
+        },
+        uberSheep: {
+            icon: 'spr_UberSheepIcon_0.png', // placeholder icon
+            name: 'Uber Sheep',
+        },
+        sake: {
+            icon: 'spr_SakeIcon_0.png', // using sake icon
+            name: 'Sake',
+        },
+        hopeSoda: {
+            icon: 'spr_HopeSodaIcon_0.png', // placeholder icon
+            name: 'Hope Soda',
         }
     };
 
@@ -229,12 +252,54 @@
         }
     ];
 
+    const superCollabs = [
+        {
+            icon: 'spr_KanaCocoIcon_0.png',
+            name: 'Holy Fire',
+            attackType: 'Multishot',
+            collab: collabs.find(c => c.name === 'Dragon Fire')!,
+            item: items.gorillasPaw
+        },
+        {
+            icon: 'spr_IdolLiveIcon_0.png',
+            name: 'Idol Live',
+            attackType: 'Ranged',
+            collab: collabs.find(c => c.name === 'Idol Concert')!,
+            item: items.idolCostume
+        },
+        {
+            icon: 'spr_JingisukanIcon_0.png',
+            name: 'Jingisukan',
+            attackType: 'Ranged',
+            collab: collabs.find(c => c.name === 'Elite Cooking')!,
+            item: items.uberSheep
+        },
+        {
+            icon: 'spr_SnowQueenIcon_0.png',
+            name: 'Snow Queen',
+            attackType: 'Ranged',
+            collab: collabs.find(c => c.name === 'Snow Flower Sake')!,
+            item: items.sake
+        },
+        {
+            icon: 'spr_InfiniteBLIcon_0.png',
+            name: 'True Infinite BL Works',
+            attackType: 'Melee',
+            collab: collabs.find(c => c.name === 'BL Fujoshi')!,
+            item: items.hopeSoda
+        }
+    ];
+
     let selectedWeapons: Weapon[] = $state([]);
+    let selectedSuperCollab: SuperCollab | undefined = $state(undefined);
 
     let collab: Collab | undefined = $state(undefined);
-    let availableCollabs: Collab[] = $state([]);
+    let availableCollabs: (Collab | SuperCollab)[] = $state([]);
 
     function onWeaponSelect(weapon: Weapon) {
+        // Clear super collab selection when selecting weapons
+        selectedSuperCollab = undefined;
+        
         const snapshot = $state.snapshot(selectedWeapons);
         const alreadySelected = snapshot.some(w => w.name === weapon.name);
         if (alreadySelected) {
@@ -284,7 +349,11 @@
     $effect(() => {
         $inspect(selectedWeapons);
         
-        if (selectedWeapons.length === 0) {
+        if (selectedSuperCollab) {
+            // Super collab selected - show only that super collab
+            availableCollabs = [selectedSuperCollab];
+            collab = undefined;
+        } else if (selectedWeapons.length === 0) {
             // No weapons selected - hide all collaboration UI
             collab = undefined;
             availableCollabs = [];
@@ -311,15 +380,28 @@
 
     function resetSelections() {
         selectedWeapons = [];
+        selectedSuperCollab = undefined;
     }
 
-    function isCollabAchievable(collab: Collab): boolean {
+    function onSuperCollabSelect(superCollab: any) {
+        selectedSuperCollab = superCollab;
+        selectedWeapons = [];
+    }
+
+    function isCollabAchievable(collab: Collab | SuperCollab): boolean {
         if (selectedWeapons.length !== 2) return true;
+        
+        // For super collabs, always return true since they're not weapon-dependent
+        if ('collab' in collab) return true;
         
         // Check if the collab can be made with the currently selected weapons
         return collab.weapons.length === 2 &&
                collab.weapons.some(w => w.name === selectedWeapons[0].name) &&
                collab.weapons.some(w => w.name === selectedWeapons[1].name);
+    }
+
+    function isSuperCollab(item: Collab | SuperCollab): item is SuperCollab {
+        return 'collab' in item;
     }
 </script>
 
@@ -359,26 +441,77 @@
             </div>
         {/each}
     </div>
+    
+    <!-- Horizontal separator -->
+    <hr class="border-blue-300 my-2" />
+    
+    <!-- Super Collabs section -->
+    <div class="flex flex-col gap-2">
+        <p><strong>Super Collabs</strong> - Click to see the collab and item combination.</p>
+        <div class="flex flex-wrap gap-2">
+            {#each superCollabs as superCollab}
+                <button 
+                    class="flex items-center gap-2 bg-blue-800 hover:bg-blue-700 px-3 py-2 rounded text-sm transition-colors"
+                    class:bg-blue-600={selectedSuperCollab?.name === superCollab.name}
+                    onclick={() => onSuperCollabSelect(superCollab)}
+                >
+                    <img src="{base}/sprites/{superCollab.icon}" alt={superCollab.name} class="w-6 h-6" />
+                    <span>{superCollab.name}</span>
+                    <span class="text-xs text-blue-200">({superCollab.attackType})</span>
+                </button>
+            {/each}
+        </div>
+    </div>
 </div>
 
-{#if availableCollabs.length > 0 && selectedWeapons.length > 0}
+{#if availableCollabs.length > 0 && (selectedWeapons.length > 0 || selectedSuperCollab)}
     <div class="flex flex-col gap-2 bg-green-900 p-2 rounded-md">
-        <p><strong>Available Collaborations with {selectedWeapons[0].name}</strong></p>
+        {#if selectedSuperCollab}
+            <p><strong>Super Collab: {selectedSuperCollab.name}</strong></p>
+        {:else}
+            <p><strong>Available Collaborations with {selectedWeapons[0].name}</strong></p>
+        {/if}
         <div class="flex flex-wrap gap-4">
             {#each availableCollabs as availableCollab}
                 <div class="flex flex-col gap-2 bg-green-800 p-3 rounded-md w-fit" class:darkened={!isCollabAchievable(availableCollab)}>
                     <IconText icon={`${base}/sprites/${availableCollab.icon}`} text={availableCollab.name} />
                     <div class="text-sm">
                         <p><strong>Attack Type:</strong> {availableCollab.attackType}</p>
-                        <p><strong>Required Weapons:</strong></p>
-                        <div class="flex gap-2 mt-1">
-                            {#each availableCollab.weapons as weapon}
-                                <div class="flex items-center gap-1 text-xs bg-green-700 px-2 py-1 rounded">
-                                    <img src="{base}/sprites/{weapon.icon}" alt={weapon.name} class="w-4 h-4" />
-                                    <span>{weapon.name}</span>
+                        {#if isSuperCollab(availableCollab)}
+                            <p><strong>Made from:</strong></p>
+                            <div class="flex flex-col gap-2 mt-1">
+                                <!-- Collab component -->
+                                <div class="bg-green-700 p-2 rounded">
+                                    <p class="text-xs font-semibold mb-1">Collab: {availableCollab.collab.name}</p>
+                                    <div class="flex gap-1">
+                                        {#each availableCollab.collab.weapons as weapon}
+                                            <div class="flex items-center gap-1 text-xs bg-green-600 px-2 py-1 rounded">
+                                                <img src="{base}/sprites/{weapon.icon}" alt={weapon.name} class="w-4 h-4" />
+                                                <span>{weapon.name}</span>
+                                            </div>
+                                        {/each}
+                                    </div>
                                 </div>
-                            {/each}
-                        </div>
+                                <!-- Item component -->
+                                <div class="bg-green-700 p-2 rounded">
+                                    <p class="text-xs font-semibold mb-1">Item: {availableCollab.item.name}</p>
+                                    <div class="flex items-center gap-1 text-xs bg-green-600 px-2 py-1 rounded w-fit">
+                                        <img src="{base}/sprites/{availableCollab.item.icon}" alt={availableCollab.item.name} class="w-4 h-4" />
+                                        <span>{availableCollab.item.name}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        {:else}
+                            <p><strong>Required Weapons:</strong></p>
+                            <div class="flex gap-2 mt-1">
+                                {#each availableCollab.weapons as weapon}
+                                    <div class="flex items-center gap-1 text-xs bg-green-700 px-2 py-1 rounded">
+                                        <img src="{base}/sprites/{weapon.icon}" alt={weapon.name} class="w-4 h-4" />
+                                        <span>{weapon.name}</span>
+                                    </div>
+                                {/each}
+                            </div>
+                        {/if}
                     </div>
                 </div>
             {/each}
