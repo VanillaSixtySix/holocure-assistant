@@ -2,10 +2,10 @@
     import { base } from '$app/paths';
     import IconText from './icon-text.svelte';
 
-    const { weapon, onWeaponSelect, selected, compatible = true } = $props();
+    const { weapon, onWeaponSelect, selected, compatible = true, used = false } = $props();
 </script>
 
-<button class="cursor-pointer rounded-md" class:selected class:incompatible={!compatible} onclick={() => onWeaponSelect(weapon)}>
+<button class="cursor-pointer rounded-md" class:selected class:incompatible={!compatible} class:used onclick={() => onWeaponSelect(weapon)}>
     <IconText icon={`${base}/sprites/${weapon.icon}`} text={weapon.name} />
 </button>
 
@@ -19,6 +19,11 @@
     button.incompatible {
         opacity: 0.5;
         filter: brightness(0.8);
+        pointer-events: none;
+    }
+    button.used {
+        opacity: 0.3;
+        filter: brightness(0.5) grayscale(1);
         pointer-events: none;
     }
 </style>

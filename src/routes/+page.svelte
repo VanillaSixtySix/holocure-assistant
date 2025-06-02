@@ -137,7 +137,7 @@
             attackType: 'Melee',
         },
         {
-            icon: 'spr_CurseBallIcon_0.png',
+            icon: 'spr_CurseballIcon_0.png',
             name: 'Curse Ball',
             weapons: [weapons.bounceBall, weapons.enCurse],
             attackType: 'Ranged',
@@ -292,11 +292,15 @@
 
     let selectedWeapons: Weapon[] = $state([]);
     let selectedSuperCollab: SuperCollab | undefined = $state(undefined);
+    let usedWeapons: Weapon[] = $state([]);
 
     let collab: Collab | undefined = $state(undefined);
     let availableCollabs: (Collab | SuperCollab)[] = $state([]);
 
     function onWeaponSelect(weapon: Weapon) {
+        // Prevent selecting used weapons
+        if (isWeaponUsed(weapon)) return;
+        
         // Clear super collab selection when selecting weapons
         selectedSuperCollab = undefined;
         
@@ -374,13 +378,22 @@
         }
     });
 
-    function isWeaponSelected(weapon: Weapon) {
-        return $state.snapshot(selectedWeapons).includes(weapon);
+    function isWeaponUsed(weapon: Weapon): boolean {
+        return usedWeapons.some(w => w.name === weapon.name);
+    }
+
+    function markAsUsed() {
+        if (selectedWeapons.length === 2) {
+            usedWeapons = [...usedWeapons, ...selectedWeapons];
+            selectedWeapons = [];
+            selectedSuperCollab = undefined;
+        }
     }
 
     function resetSelections() {
         selectedWeapons = [];
         selectedSuperCollab = undefined;
+        usedWeapons = [];
     }
 
     function onSuperCollabSelect(superCollab: any) {
@@ -389,9 +402,20 @@
     }
 
     function isCollabAchievable(collab: Collab | SuperCollab): boolean {
+        // Check if any required weapons are used (marked as used)
+        if ('collab' in collab) {
+            // For super collabs, check if any weapons in the base collab are used
+            const hasUsedWeapons = collab.collab.weapons.some(weapon => isWeaponUsed(weapon));
+            if (hasUsedWeapons) return false;
+        } else {
+            // For regular collabs, check if any required weapons are used
+            const hasUsedWeapons = collab.weapons.some(weapon => isWeaponUsed(weapon));
+            if (hasUsedWeapons) return false;
+        }
+        
         if (selectedWeapons.length !== 2) return true;
         
-        // For super collabs, always return true since they're not weapon-dependent
+        // For super collabs, always return true since they're not weapon-dependent (if no used weapons)
         if ('collab' in collab) return true;
         
         // Check if the collab can be made with the currently selected weapons
@@ -413,12 +437,22 @@
 </style>
 
 <h1 class="text-2xl font-semibold">HoloCure Assistant</h1>
-<button 
-    class="bg-blue-500 hover:bg-blue-600 hover:cursor-pointer text-white font-bold py-1 px-2 rounded mb-2 w-fit"
-    onclick={resetSelections}
->
-    Reset Selections
-</button>
+<div class="flex gap-2 mb-2">
+    <button 
+        class="bg-blue-500 hover:bg-blue-600 hover:cursor-pointer text-white font-bold py-1 px-2 rounded w-fit"
+        onclick={resetSelections}
+    >
+        Reset Selections
+    </button>
+    {#if selectedWeapons.length === 2}
+        <button 
+            class="bg-blue-500 hover:bg-blue-600 hover:cursor-pointer text-white font-bold py-1 px-2 rounded w-fit"
+            onclick={markAsUsed}
+        >
+            Mark as Used
+        </button>
+    {/if}
+</div>
 <div class="flex flex-col gap-2 bg-blue-900 p-2 rounded-md">
     <p><strong>Picker</strong> -
         {#if selectedWeapons.length === 0}
@@ -436,7 +470,8 @@
                     {weapon} 
                     {onWeaponSelect} 
                     selected={selectedWeapons.some(w => w.name === weapon.name)}
-                    compatible={isWeaponCompatible(weapon)}
+                    compatible={isWeaponCompatible(weapon) && !isWeaponUsed(weapon)}
+                    used={isWeaponUsed(weapon)}
                 />
             </div>
         {/each}
