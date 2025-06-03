@@ -402,6 +402,16 @@
         markedPairs = [];
     }
 
+    function removePair(index: number) {
+        const pairToRemove = markedPairs[index];
+        // Remove the weapons from usedWeapons
+        usedWeapons = usedWeapons.filter(weapon => 
+            !pairToRemove.weapons.some(pairWeapon => pairWeapon.name === weapon.name)
+        );
+        // Remove the pair from markedPairs
+        markedPairs = markedPairs.filter((_, i) => i !== index);
+    }
+
     function onSuperCollabSelect(superCollab: any) {
         selectedSuperCollab = superCollab;
         selectedWeapons = [];
@@ -515,6 +525,13 @@
                                     <span>{pair.collab.name}</span>
                                 </div>
                             {/if}
+                            <button 
+                                class="ml-2 bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded transition-colors"
+                                onclick={() => removePair(index)}
+                                title="Remove this pair"
+                            >
+                                ✕
+                            </button>
                         </div>
                     {/each}
                 </div>
