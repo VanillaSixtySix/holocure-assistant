@@ -293,6 +293,8 @@
     let selectedWeapons: Weapon[] = $state([]);
     let selectedSuperCollab: SuperCollab | undefined = $state(undefined);
     let usedWeapons: Weapon[] = $state([]);
+    let markedPairs: { weapons: Weapon[], collab?: Collab }[] = $state([]);
+    let hoveredWeapon: Weapon | null = $state(null);
 
     let collab: Collab | undefined = $state(undefined);
     let availableCollabs: (Collab | SuperCollab)[] = $state([]);
@@ -384,6 +386,9 @@
 
     function markAsUsed() {
         if (selectedWeapons.length === 2) {
+            // Add to marked pairs history
+            markedPairs = [...markedPairs, { weapons: [...selectedWeapons], collab }];
+            
             usedWeapons = [...usedWeapons, ...selectedWeapons];
             selectedWeapons = [];
             selectedSuperCollab = undefined;
@@ -394,6 +399,7 @@
         selectedWeapons = [];
         selectedSuperCollab = undefined;
         usedWeapons = [];
+        markedPairs = [];
     }
 
     function onSuperCollabSelect(superCollab: any) {
@@ -472,10 +478,86 @@
                     selected={selectedWeapons.some(w => w.name === weapon.name)}
                     compatible={isWeaponCompatible(weapon) && !isWeaponUsed(weapon)}
                     used={isWeaponUsed(weapon)}
+                    hovered={hoveredWeapon?.name === weapon.name}
                 />
             </div>
         {/each}
     </div>
+    
+    <!-- Selected Pairs Indicator -->
+    {#if selectedWeapons.length > 0 || markedPairs.length > 0}
+        <div class="flex flex-col gap-2 bg-purple-900 p-2 rounded-md">
+            <p><strong>Selected Pairs</strong></p>
+            
+            <!-- Marked pairs history -->
+            {#if markedPairs.length > 0}
+                <div class="flex flex-col gap-1">
+                    {#each markedPairs as pair, index}
+                        <div class="flex items-center gap-2 text-sm bg-purple-800 p-2 rounded">
+                            <span class="text-purple-300 text-xs">#{index + 1}</span>
+                            <div class="flex items-center gap-1 bg-purple-700 px-2 py-1 rounded cursor-pointer" 
+                                 onmouseenter={() => hoveredWeapon = pair.weapons[0]} 
+                                 onmouseleave={() => hoveredWeapon = null}>
+                                <img src="{base}/sprites/{pair.weapons[0].icon}" alt={pair.weapons[0].name} class="w-4 h-4" />
+                                <span>{pair.weapons[0].name}</span>
+                            </div>
+                            <span class="text-purple-200">+</span>
+                            <div class="flex items-center gap-1 bg-purple-700 px-2 py-1 rounded cursor-pointer" 
+                                 onmouseenter={() => hoveredWeapon = pair.weapons[1]} 
+                                 onmouseleave={() => hoveredWeapon = null}>
+                                <img src="{base}/sprites/{pair.weapons[1].icon}" alt={pair.weapons[1].name} class="w-4 h-4" />
+                                <span>{pair.weapons[1].name}</span>
+                            </div>
+                            {#if pair.collab}
+                                <span class="text-purple-200">=</span>
+                                <div class="flex items-center gap-1 bg-purple-600 px-2 py-1 rounded">
+                                    <img src="{base}/sprites/{pair.collab.icon}" alt={pair.collab.name} class="w-4 h-4" />
+                                    <span>{pair.collab.name}</span>
+                                </div>
+                            {/if}
+                        </div>
+                    {/each}
+                </div>
+            {/if}
+            
+            <!-- Current selection -->
+            {#if selectedWeapons.length > 0}
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="text-purple-300 text-xs">Current:</span>
+                    {#if selectedWeapons.length === 1}
+                        <div class="flex items-center gap-1 bg-purple-700 px-2 py-1 rounded cursor-pointer" 
+                             onmouseenter={() => hoveredWeapon = selectedWeapons[0]} 
+                             onmouseleave={() => hoveredWeapon = null}>
+                            <img src="{base}/sprites/{selectedWeapons[0].icon}" alt={selectedWeapons[0].name} class="w-4 h-4" />
+                            <span>{selectedWeapons[0].name}</span>
+                        </div>
+                        <span class="text-purple-200">+ [Select second weapon]</span>
+                    {:else if selectedWeapons.length === 2}
+                        <div class="flex items-center gap-1 bg-purple-700 px-2 py-1 rounded cursor-pointer" 
+                             onmouseenter={() => hoveredWeapon = selectedWeapons[0]} 
+                             onmouseleave={() => hoveredWeapon = null}>
+                            <img src="{base}/sprites/{selectedWeapons[0].icon}" alt={selectedWeapons[0].name} class="w-4 h-4" />
+                            <span>{selectedWeapons[0].name}</span>
+                        </div>
+                        <span class="text-purple-200">+</span>
+                        <div class="flex items-center gap-1 bg-purple-700 px-2 py-1 rounded cursor-pointer" 
+                             onmouseenter={() => hoveredWeapon = selectedWeapons[1]} 
+                             onmouseleave={() => hoveredWeapon = null}>
+                            <img src="{base}/sprites/{selectedWeapons[1].icon}" alt={selectedWeapons[1].name} class="w-4 h-4" />
+                            <span>{selectedWeapons[1].name}</span>
+                        </div>
+                        {#if collab}
+                            <span class="text-purple-200">=</span>
+                            <div class="flex items-center gap-1 bg-purple-600 px-2 py-1 rounded">
+                                <img src="{base}/sprites/{collab.icon}" alt={collab.name} class="w-4 h-4" />
+                                <span>{collab.name}</span>
+                            </div>
+                        {/if}
+                    {/if}
+                </div>
+            {/if}
+        </div>
+    {/if}
     
     <!-- Horizontal separator -->
     <hr class="border-blue-300 my-2" />
